@@ -8,80 +8,23 @@ on:
         description: 'ใส่ 1 ถ้าไม่อยากโพสต์จริง ใส่ 0 ถ้าจะโพสต์จริง'
         required: false
         default: '0'
-        type: choice
-        options:
-          - '0'
-          - '1'
-      title_override:
-        description: 'ใส่หัวข้อเองได้ ถ้าว่างจะสุ่มหัวข้อตามวัน'
-        required: false
-        default: ''
-        type: string
-
-permissions:
-  contents: read
-
-concurrency:
-  group: dhamma-yamchao-auto
-  cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install ffmpeg + Fonts + Pillow
+      - name: Install ffmpeg and Pillow
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y ffmpeg fonts-dejavu-core fonts-noto-core fonts-noto-cjk
-          pip install --upgrade pip
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
           pip install Pillow
-          echo "=== ffmpeg ==="
-          ffmpeg -version | head -n 1
-          echo "=== python ==="
-          python --version
-          echo "=== fonts ==="
-          fc-list | head -n 5
-
-      - name: Check files
-        run: |
-          ls -lh
-          echo "--- Dhamma-Yamchao-Auto.py exists? ---"
-          ls -lh Dhamma-Yamchao-Auto.py
-          echo "--- Secrets check (ไม่โชว์ค่า) ---"
-          if [ -z "${{ secrets.FACEBOOK_PAGE_ID }}" ]; then echo "ERROR: ไม่มี FACEBOOK_PAGE_ID"; exit 1; fi
-          if [ -z "${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}" ]; then echo "ERROR: ไม่มี FACEBOOK_PAGE_ACCESS_TOKEN"; exit 1; fi
-          echo "Secrets OK"
-
       - name: Post Reels to Facebook Direct
         env:
           FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
           FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DRY_RUN: ${{ inputs.dry_run }}
-          TITLE_OVERRIDE: ${{ inputs.title_override }}
-          TZ: Asia/Bangkok
-        run: |
-          echo "Page ID: ${{ secrets.FACEBOOK_PAGE_ID }}"
-          echo "DRY_RUN: ${{ inputs.dry_run }}"
-          python Dhamma-Yamchao-Auto.py
-
-      - name: Upload video artifact (ถ้าต้องการดูวีดีโอที่สร้าง)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dhamma-video-${{ github.run_number }}
-          path: |
-            dhamma.mp4
-            dhamma.jpg
-          if-no-files-found: ignore
-          retention-days: 7
+        run: python Dhamma-Yamchao-Auto.py
