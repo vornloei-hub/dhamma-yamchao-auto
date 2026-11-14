@@ -1,16 +1,20 @@
-name: Dhamma Yamchao Auto 06:00
+name: Dhamma Auto (06:00 และ 18:00)
 on:
   schedule:
-    - cron: '0 23 * * *'   # 23:00 UTC = 06:00 เวลาไทย
+    - cron: '0 23 * * *'   # 23:00 UTC = 06:00 เวลาไทย (รอบเช้า)
+    - cron: '0 11 * * *'   # 11:00 UTC = 18:00 เวลาไทย (รอบเย็น)
   workflow_dispatch:
     inputs:
+      slot:
+        description: 'morning หรือ evening (ว่าง = ดูจากเวลา)'
+        default: ''
       dry_run:
         description: 'ทดสอบสร้างวิดีโออย่างเดียว ไม่โพสต์ (1 = ไม่โพสต์)'
         default: '0'
 jobs:
   post:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,8 +32,10 @@ jobs:
           FB_PAGE_ID: ${{ secrets.FB_PAGE_ID || secrets.FACEBOOK_PAGE_ID }}
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN || secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
+          SLOT: ${{ github.event.inputs.slot }}
         run: python Dhamma-Yamchao-Auto.py
       - name: Keep video as artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dhamma-video
