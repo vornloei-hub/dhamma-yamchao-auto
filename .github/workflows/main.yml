@@ -28,3 +28,4 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: python Dhamma-Yamchao-Auto.py
+
